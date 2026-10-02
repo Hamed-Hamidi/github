@@ -1,0 +1,20 @@
+.global-nav .mark {
+  color: #f0f6fc !important;
+}
+
+@media (max-width: 800px) {
+  .global-settings {
+    display: none !important;
+  }
+
+  .repository-actions button {
+    min-width: 0;
+    padding-right: 6px;
+    padding-left: 6px;
+  }
+
+  .repository-actions b {
+    padding-right: 5px;
+    padding-left: 5px;
+  }
+}

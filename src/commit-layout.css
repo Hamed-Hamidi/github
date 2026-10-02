@@ -1,0 +1,113 @@
+.global-links a {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.global-links .nav-chevron {
+  width: 12px;
+  height: 12px;
+  fill: currentColor;
+  color: #9198a1;
+}
+
+.file-explorer > header button svg,
+.tree-controls svg,
+.file-commit button svg {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+}
+
+.tree-branch {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.tree-branch .branch-chevron {
+  width: 12px;
+  height: 12px;
+  margin-left: auto;
+}
+
+.tree-search {
+  display: grid;
+  place-items: center;
+}
+
+.explorer-grid {
+  grid-template-rows: 62px 62px minmax(520px, 1fr);
+}
+
+.file-explorer {
+  grid-column: 1;
+  grid-row: 1 / 4;
+}
+
+.file-content {
+  display: contents;
+}
+
+.file-breadcrumb {
+  grid-column: 2 / 4;
+  grid-row: 1;
+  margin: 0 16px;
+  align-self: center;
+}
+
+.file-commit {
+  grid-column: 2 / 4;
+  grid-row: 2;
+  margin: 0 16px 15px;
+}
+
+.file-commit time {
+  color: #59636e;
+}
+
+.file-commit button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.source-panel {
+  grid-column: 2;
+  grid-row: 3;
+  margin: 0 8px 18px 16px;
+}
+
+.symbols-panel {
+  grid-column: 3;
+  grid-row: 3;
+  margin: 0 10px 18px 8px;
+}
+
+@media (max-width: 1150px) {
+  .file-breadcrumb,
+  .file-commit {
+    grid-column: 2 / 3;
+  }
+
+  .source-panel {
+    margin-right: 16px;
+  }
+}
+
+@media (max-width: 760px) {
+  .explorer-grid {
+    display: block;
+  }
+
+  .file-breadcrumb,
+  .file-commit,
+  .source-panel {
+    margin-right: 12px;
+    margin-left: 12px;
+  }
+
+  .file-breadcrumb {
+    padding-top: 12px;
+  }
+}

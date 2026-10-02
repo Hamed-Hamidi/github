@@ -1,0 +1,36 @@
+@media (max-width: 640px) {
+  .repo-name {
+    flex-wrap: wrap;
+    font-size: 19px;
+  }
+
+  .repo-name a {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .repo-name small {
+    display: none;
+  }
+
+  .repo-actions button {
+    flex: 1;
+    padding: 0 5px;
+    font-size: 12px !important;
+  }
+
+  .repo-actions b {
+    margin-left: 4px !important;
+    font-size: 12px !important;
+  }
+
+  .branch-wrap {
+    width: 100%;
+  }
+
+  .go-file,
+  .code-button {
+    flex: 1;
+    margin: 0;
+  }
+}

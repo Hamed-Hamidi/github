@@ -1,0 +1,57 @@
+body app-root main:has(.explorer-grid) {
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.folder-icon,
+.document-icon {
+  position: relative;
+  display: inline-block;
+  color: transparent !important;
+}
+
+.folder-icon {
+  width: 16px;
+  height: 11px;
+  margin-top: 3px;
+  border-radius: 2px;
+  background: #54aeff;
+}
+
+.folder-icon::before {
+  content: "";
+  position: absolute;
+  top: -3px;
+  left: 1px;
+  width: 7px;
+  height: 4px;
+  border-radius: 2px 2px 0 0;
+  background: #54aeff;
+}
+
+.document-icon {
+  width: 12px;
+  height: 15px;
+  border: 1.5px solid #59636e;
+  border-radius: 1px;
+}
+
+.document-icon::after {
+  content: "";
+  position: absolute;
+  top: -1.5px;
+  right: -1.5px;
+  width: 4px;
+  height: 4px;
+  border-bottom: 1.5px solid #59636e;
+  border-left: 1.5px solid #59636e;
+  background: #fff;
+}
+
+@media (max-width: 760px) {
+  .file-breadcrumb a:first-child {
+    display: inline !important;
+  }
+}
