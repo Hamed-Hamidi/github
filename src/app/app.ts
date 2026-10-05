@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, signal } from '@angular/core';
+import { Component, computed, signal } from '@angular/core';
 
 type RepoFile = { name: string; type: 'file' | 'folder'; message: string; age: string };
 type Repository = {
@@ -298,22 +298,99 @@ ${cases}
 
 @Component({ selector: 'app-root', imports: [CommonModule], templateUrl: './app.html', styleUrl: './app.css' })
 export class App {
+  private readonly publishEndpoint = 'http://localhost:5065/api/challenges/publish';
+
   readonly repository = repositories[Math.floor(Math.random() * repositories.length)];
   readonly activeTab = signal('Code');
   readonly branchOpen = signal(false);
   readonly starred = signal(false);
   readonly copied = signal(false);
+  readonly promptText = signal('');
+  readonly codeText = signal('');
+  readonly generatedCode = signal<string | null>(null);
+  readonly generatedFileName = signal<string | null>(null);
+  readonly requestStatus = signal('Waiting for clipboard input.');
+  readonly requestTone = signal<'idle' | 'working' | 'success' | 'error'>('idle');
+  readonly isPublishing = signal(false);
   readonly projectDetails = this.getProjectDetails(this.repository.name);
   readonly displayCode = buildExpandedCode(this.repository.code, this.projectDetails);
-  readonly lines = this.displayCode.split('\n');
+  readonly visibleCode = computed(() => this.generatedCode() ?? this.displayCode);
+  readonly visibleFileName = computed(() => this.generatedFileName() ?? this.repository.fileName);
+  readonly lines = computed(() => this.visibleCode().split('\n'));
 
   setTab(tab: string): void { this.activeTab.set(tab); }
+  async capturePrompt(): Promise<void> {
+    this.activeTab.set('Code');
+
+    try {
+      const text = await this.readClipboard();
+      this.promptText.set(text);
+      this.requestStatus.set('Question and instructions captured from clipboard.');
+      this.requestTone.set('success');
+    } catch (error) {
+      this.setRequestError(error, 'Unable to read the clipboard.');
+    }
+  }
+
+  async publishClipboardCode(): Promise<void> {
+    if (this.isPublishing()) return;
+
+    this.isPublishing.set(true);
+    this.requestStatus.set('Reading code and generating the solution...');
+    this.requestTone.set('working');
+
+    try {
+      const code = await this.readClipboard();
+      this.codeText.set(code);
+
+      const response = await fetch(this.publishEndpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          firstText: this.promptText(),
+          secondText: code
+        })
+      });
+
+      const result = await response.json() as PublishResult;
+      if (!response.ok) {
+        throw new Error(result.error ?? 'The publishing request failed.');
+      }
+
+      if (!result.code || !result.fileName) {
+        throw new Error('The server returned an incomplete response.');
+      }
+
+      this.generatedCode.set(result.code);
+      this.generatedFileName.set(result.fileName);
+      this.requestStatus.set(`Published to ${result.path ?? result.fileName}.`);
+      this.requestTone.set('success');
+    } catch (error) {
+      this.setRequestError(error, 'Unable to generate and publish the solution.');
+    } finally {
+      this.isPublishing.set(false);
+    }
+  }
+
   toggleBranch(): void { this.branchOpen.update(value => !value); }
   toggleStar(): void { this.starred.update(value => !value); }
   async copyCode(): Promise<void> {
-    await navigator.clipboard.writeText(this.displayCode);
+    await navigator.clipboard.writeText(this.visibleCode());
     this.copied.set(true);
     window.setTimeout(() => this.copied.set(false), 1600);
+  }
+
+  private async readClipboard(): Promise<string> {
+    if (!window.isSecureContext || !navigator.clipboard?.readText) {
+      throw new Error('Clipboard access requires HTTPS or localhost.');
+    }
+
+    return navigator.clipboard.readText();
+  }
+
+  private setRequestError(error: unknown, fallback: string): void {
+    this.requestStatus.set(error instanceof Error ? error.message : fallback);
+    this.requestTone.set('error');
   }
 
   private getProjectDetails(name: string): ProjectDetails {
@@ -331,3 +408,10 @@ export class App {
     return details[name];
   }
 }
+
+type PublishResult = {
+  fileName?: string;
+  path?: string;
+  code?: string;
+  error?: string;
+};

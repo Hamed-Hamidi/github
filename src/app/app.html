@@ -17,7 +17,7 @@
   </div>
 
   <nav class="repo-tabs" aria-label="Repository">
-    <button [class.active]="activeTab() === 'Code'" (click)="setTab('Code')"><svg viewBox="0 0 16 16"><path d="m5.22 3.22-4.25 4.25a.75.75 0 0 0 0 1.06l4.25 4.25 1.06-1.06L2.56 8l3.72-3.72-1.06-1.06Zm5.56 0-1.06 1.06L13.44 8l-3.72 3.72 1.06 1.06 4.25-4.25a.75.75 0 0 0 0-1.06l-4.25-4.25Z"/></svg>Code</button>
+    <button [class.active]="activeTab() === 'Code'" (click)="capturePrompt()"><svg viewBox="0 0 16 16"><path d="m5.22 3.22-4.25 4.25a.75.75 0 0 0 0 1.06l4.25 4.25 1.06-1.06L2.56 8l3.72-3.72-1.06-1.06Zm5.56 0-1.06 1.06L13.44 8l-3.72 3.72 1.06 1.06 4.25-4.25a.75.75 0 0 0 0-1.06l-4.25-4.25Z"/></svg>Code</button>
     <button [class.active]="activeTab() === 'Issues'" (click)="setTab('Issues')"><svg viewBox="0 0 16 16"><path d="M8 1.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm9 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z"/></svg>Issues <span>3</span></button>
     <button [class.active]="activeTab() === 'Pull requests'" (click)="setTab('Pull requests')"><svg viewBox="0 0 16 16"><path d="M3.25 1a2.25 2.25 0 1 1-.75 4.37v5.26a2.25 2.25 0 1 1 1.5 0V5.37A2.25 2.25 0 0 1 3.25 1ZM3.25 2.5a.75.75 0 1 0 0 1.5.75.75 0 0 0 0-1.5Zm0 9.5a.75.75 0 1 0 0 1.5.75.75 0 0 0 0-1.5ZM9 3.75A.75.75 0 0 1 9.75 3h1.5A2.75 2.75 0 0 1 14 5.75v4.88a2.25 2.25 0 1 1-1.5 0V5.75a1.25 1.25 0 0 0-1.25-1.25h-1.5A.75.75 0 0 1 9 3.75Z"/></svg>Pull requests</button>
     <button [class.active]="activeTab() === 'Actions'" (click)="setTab('Actions')"><svg viewBox="0 0 16 16"><path d="M1 8a7 7 0 1 1 3.5 6.06l.75-1.3A5.5 5.5 0 1 0 2.5 8H5L1.75 4.75-1.5 8H1Zm6-3 5 3-5 3V5Z"/></svg>Actions</button>
@@ -39,7 +39,7 @@
           <button><span class="chevron">›</span><span class="folder-icon">■</span>docs</button>
           <button class="expanded"><span class="chevron">⌄</span><span class="folder-icon">■</span>src</button>
           <button class="tree-depth-1 expanded"><span class="chevron">⌄</span><span class="folder-icon">■</span>{{ projectDetails.folder }}</button>
-          <button class="tree-depth-2 selected"><span></span><span class="document-icon">▯</span>{{ repository.fileName }}</button>
+          <button class="tree-depth-2 selected"><span></span><span class="document-icon">▯</span>{{ visibleFileName() }}</button>
           <button class="tree-depth-1"><span></span><span class="document-icon">▯</span>{{ repository.name }}.csproj</button>
           <button><span class="chevron">›</span><span class="folder-icon">■</span>tests</button>
           <button><span></span><span class="document-icon">▯</span>.gitignore</button>
@@ -49,11 +49,11 @@
       </aside>
 
       <section class="file-content">
-        <div class="file-breadcrumb"><a href="#">{{ repository.name }}</a><span>/</span><a href="#">src</a><span>/</span><a href="#">{{ projectDetails.folder }}</a><span>/</span><strong>{{ repository.fileName }}</strong><button aria-label="Copy path">▣</button></div>
+        <div class="file-breadcrumb"><a href="#">{{ repository.name }}</a><span>/</span><a href="#">src</a><span>/</span><a href="#">{{ projectDetails.folder }}</a><span>/</span><strong>{{ visibleFileName() }}</strong><button aria-label="Copy path">▣</button></div>
         <div class="file-commit"><span class="avatar small">HC</span><strong>{{ repository.owner }}</strong><span>{{ repository.updated }}</span><time>{{ projectDetails.hash }} · {{ projectDetails.commitAge }}</time><button><svg viewBox="0 0 16 16"><path d="M1.64 5.27A6.5 6.5 0 1 1 2 11.2l1.2-.9A5 5 0 1 0 2.72 6H5v1.5H.75A.75.75 0 0 1 0 6.75V2.5h1.5v2.13l.14.64ZM8.75 4v3.69l2.28 2.28-1.06 1.06-2.5-2.5A.75.75 0 0 1 7.25 8V4h1.5Z"/></svg>History</button></div>
         <section class="source-panel">
-          <header><div><button class="active">Code</button><button>Blame</button><span>{{ lines.length }} lines · C# · {{ projectDetails.kind }}</span></div><div><button>Raw</button><button (click)="copyCode()" [attr.aria-label]="copied() ? 'Copied' : 'Copy code'">{{ copied() ? '✓' : '▣' }}</button><button aria-label="Download file">⇩</button><button aria-label="Edit file">◇</button><button aria-label="Open in editor">&lt;&gt;</button></div></header>
-          <div class="source-code"><ol aria-hidden="true">@for (line of lines; track $index) { <li>{{ $index + 1 }}</li> }</ol><pre><code>{{ displayCode }}</code></pre></div>
+          <header><div><button class="active">Code</button><button>Blame</button><span>{{ lines().length }} lines · C# · {{ projectDetails.kind }}</span></div><div><button>Raw</button><button class="publish-clipboard" (click)="publishClipboardCode()" [disabled]="isPublishing()" aria-label="Read clipboard code and publish"><svg viewBox="0 0 16 16"><path d="M3.75 1h6.5c.97 0 1.75.78 1.75 1.75V4h1.25c.97 0 1.75.78 1.75 1.75v7.5c0 .97-.78 1.75-1.75 1.75h-6.5A1.75 1.75 0 0 1 5 13.25V12H3.75A1.75 1.75 0 0 1 2 10.25v-7.5C2 1.78 2.78 1 3.75 1ZM3.5 2.75v7.5c0 .14.11.25.25.25H5V5.75C5 4.78 5.78 4 6.75 4h3.75V2.75a.25.25 0 0 0-.25-.25h-6.5a.25.25 0 0 0-.25.25Zm3 3v7.5c0 .14.11.25.25.25h6.5c.14 0 .25-.11.25-.25v-7.5a.25.25 0 0 0-.25-.25h-6.5a.25.25 0 0 0-.25.25Z"/></svg></button><button aria-label="Download file">⇩</button><button aria-label="Edit file">◇</button><button aria-label="Open in editor">&lt;&gt;</button></div></header>
+          <div class="source-code"><ol aria-hidden="true">@for (line of lines(); track $index) { <li>{{ $index + 1 }}</li> }</ol><pre><code>{{ visibleCode() }}</code></pre></div>
         </section>
       </section>
 
@@ -64,6 +64,15 @@
         <nav>@for (symbol of projectDetails.symbols; track symbol; let first = $first) { <button><span>{{ first ? '⌄' : '' }}</span><small>{{ first ? 'class' : 'method' }}</small>{{ symbol }}</button> }</nav>
       </aside>
     </div>
+
+    <section class="clipboard-request" aria-labelledby="clipboard-request-title">
+      <h2 id="clipboard-request-title">Request input</h2>
+      <div class="clipboard-request-fields">
+        <label><span>Question and instructions</span><textarea readonly [value]="promptText()"></textarea></label>
+        <label><span>Code or additional context</span><textarea readonly [value]="codeText()"></textarea></label>
+      </div>
+      <p [attr.data-tone]="requestTone()" role="status" aria-live="polite">{{ requestStatus() }}</p>
+    </section>
   } @else {
     <section class="empty-view"><div>◌</div><h1>{{ activeTab() }}</h1><p>This repository has no public {{ activeTab().toLowerCase() }} yet.</p></section>
   }

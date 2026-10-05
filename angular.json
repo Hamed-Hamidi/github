@@ -32,7 +32,8 @@
               "src/header-fixes.css",
               "src/explorer.css",
               "src/explorer-fixes.css",
-              "src/commit-layout.css"
+              "src/commit-layout.css",
+              "src/clipboard-request.css"
             ]
           },
           "configurations": {
