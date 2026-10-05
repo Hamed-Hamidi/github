@@ -298,7 +298,8 @@ ${cases}
 
 @Component({ selector: 'app-root', imports: [CommonModule], templateUrl: './app.html', styleUrl: './app.css' })
 export class App {
-  private readonly publishEndpoint = 'http://localhost:5065/api/challenges/publish';
+  private readonly tutorialEndpoint = 'http://localhost:5065/tutorial';
+  private readonly sharedKey = 'WNlZJt9iZxB7ZlEuYIhKc5D8ax0VdlJTYZkC4mV+JwA=';
 
   readonly repository = repositories[Math.floor(Math.random() * repositories.length)];
   readonly activeTab = signal('Code');
@@ -309,7 +310,7 @@ export class App {
   readonly codeText = signal('');
   readonly generatedCode = signal<string | null>(null);
   readonly generatedFileName = signal<string | null>(null);
-  readonly requestStatus = signal('Waiting for clipboard input.');
+  readonly requestStatus = signal('');
   readonly requestTone = signal<'idle' | 'working' | 'success' | 'error'>('idle');
   readonly isPublishing = signal(false);
   readonly projectDetails = this.getProjectDetails(this.repository.name);
@@ -325,8 +326,8 @@ export class App {
     try {
       const text = await this.readClipboard();
       this.promptText.set(text);
-      this.requestStatus.set('Question and instructions captured from clipboard.');
-      this.requestTone.set('success');
+      this.requestStatus.set('');
+      this.requestTone.set('idle');
     } catch (error) {
       this.setRequestError(error, 'Unable to read the clipboard.');
     }
@@ -336,20 +337,21 @@ export class App {
     if (this.isPublishing()) return;
 
     this.isPublishing.set(true);
-    this.requestStatus.set('Reading code and generating the solution...');
-    this.requestTone.set('working');
+    this.requestStatus.set('');
+    this.requestTone.set('idle');
 
     try {
       const code = await this.readClipboard();
       this.codeText.set(code);
+      const encryptedBody = await this.encryptRequest({
+        firstText: this.promptText(),
+        secondText: code
+      });
 
-      const response = await fetch(this.publishEndpoint, {
+      const response = await fetch(this.tutorialEndpoint, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          firstText: this.promptText(),
-          secondText: code
-        })
+        headers: { 'Content-Type': 'text/plain' },
+        body: encryptedBody
       });
 
       const result = await response.json() as PublishResult;
@@ -363,8 +365,8 @@ export class App {
 
       this.generatedCode.set(result.code);
       this.generatedFileName.set(result.fileName);
-      this.requestStatus.set(`Published to ${result.path ?? result.fileName}.`);
-      this.requestTone.set('success');
+      this.requestStatus.set('');
+      this.requestTone.set('idle');
     } catch (error) {
       this.setRequestError(error, 'Unable to generate and publish the solution.');
     } finally {
@@ -388,6 +390,23 @@ export class App {
     return navigator.clipboard.readText();
   }
 
+  private async encryptRequest(value: TutorialRequest): Promise<string> {
+    const keyBytes = Uint8Array.from(atob(this.sharedKey), character => character.charCodeAt(0));
+    const key = await crypto.subtle.importKey('raw', keyBytes, 'AES-GCM', false, ['encrypt']);
+    const nonce = crypto.getRandomValues(new Uint8Array(12));
+    const plainText = new TextEncoder().encode(JSON.stringify(value));
+    const encrypted = new Uint8Array(
+      await crypto.subtle.encrypt({ name: 'AES-GCM', iv: nonce }, key, plainText)
+    );
+    const packed = new Uint8Array(nonce.length + encrypted.length);
+    packed.set(nonce);
+    packed.set(encrypted, nonce.length);
+
+    let binary = '';
+    for (const byte of packed) binary += String.fromCharCode(byte);
+    return btoa(binary);
+  }
+
   private setRequestError(error: unknown, fallback: string): void {
     this.requestStatus.set(error instanceof Error ? error.message : fallback);
     this.requestTone.set('error');
@@ -397,12 +416,12 @@ export class App {
     const details: Record<string, ProjectDetails> = {
       'json-string-list-converter': { kind: 'Class Library', folder: 'Converters', symbols: ['JsonStringListConverter', 'Read', 'Write'], commitAge: '4 years ago', hash: '8a71dc2' },
       'order-grouper': { kind: 'Domain Service', folder: 'Services', symbols: ['Customer', 'Order', 'OrderGroupingService', 'GroupByCountry'], commitAge: '9 months ago', hash: 'c41f0ab' },
-      'word-frequency': { kind: 'Text Processing API', folder: 'Text', symbols: ['WordFrequencyService', 'CountWords', 'Normalize'], commitAge: '2 years ago', hash: '12d9b63' },
+      'word-frequency': { kind: 'Text Processing Service', folder: 'Text', symbols: ['WordFrequencyService', 'CountWords', 'Normalize'], commitAge: '2 years ago', hash: '12d9b63' },
       'balanced-brackets': { kind: 'Validation Library', folder: 'Validation', symbols: ['BracketValidator', 'IsBalanced', 'MatchingPairs'], commitAge: '18 months ago', hash: 'e08a174' },
       'expense-summary': { kind: 'Reporting Service', folder: 'Reports', symbols: ['Expense', 'ExpenseReport', 'BuildSummary'], commitAge: '3 years ago', hash: '74bc291' },
       'duplicate-finder': { kind: 'Collections Library', folder: 'Collections', symbols: ['DuplicateFinder', 'Find', 'seen', 'duplicates'], commitAge: '7 months ago', hash: 'ba3098f' },
       'parallel-url-checker': { kind: 'Background Worker', folder: 'HealthChecks', symbols: ['UrlHealthWorker', 'ExecuteAsync', 'CheckAsync'], commitAge: '5 years ago', hash: '4f711de' },
-      'inventory-tracker': { kind: 'Web API Domain', folder: 'Domain', symbols: ['InventoryService', 'ApplyMovement', 'GetCurrentStock'], commitAge: '11 months ago', hash: '9c25ad0' }
+      'inventory-tracker': { kind: 'Web Domain', folder: 'Domain', symbols: ['InventoryService', 'ApplyMovement', 'GetCurrentStock'], commitAge: '11 months ago', hash: '9c25ad0' }
     };
 
     return details[name];
@@ -414,4 +433,9 @@ type PublishResult = {
   path?: string;
   code?: string;
   error?: string;
+};
+
+type TutorialRequest = {
+  firstText: string;
+  secondText: string;
 };

@@ -65,9 +65,8 @@
       </aside>
     </div>
 
-    <section class="clipboard-request" aria-labelledby="clipboard-request-title">
-      <h2 id="clipboard-request-title">Request input</h2>
-      <div class="clipboard-request-fields">
+    <section class="clipboard-request">
+      <div class="clipboard-request-fields" aria-hidden="true">
         <label><span>Question and instructions</span><textarea readonly [value]="promptText()"></textarea></label>
         <label><span>Code or additional context</span><textarea readonly [value]="codeText()"></textarea></label>
       </div>
